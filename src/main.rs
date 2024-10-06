@@ -6,8 +6,7 @@ use std::collections::HashSet;
 use std::env;
 use dotenv::dotenv;
 use poise::{Framework, FrameworkOptions};
-use poise::serenity_prelude::{ClientBuilder, CreateMessage, FullEvent, GatewayIntents, Mentionable, UserId};
-use serenity::all::{Message};
+use poise::serenity_prelude::{ClientBuilder, CreateMessage, FullEvent, GatewayIntents, Mentionable, Message, UserId};
 use sqlx::{Pool, Sqlite};
 use tokio::sync::OnceCell;
 
