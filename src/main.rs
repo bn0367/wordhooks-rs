@@ -7,6 +7,7 @@ use std::env;
 use dotenv::dotenv;
 use poise::{Framework, FrameworkOptions};
 use poise::serenity_prelude::{ClientBuilder, CreateMessage, FullEvent, GatewayIntents, Mentionable, UserId};
+use serenity::all::{Message};
 use sqlx::{Pool, Sqlite};
 use tokio::sync::OnceCell;
 
@@ -41,7 +42,12 @@ async fn main()
         .await
         .unwrap();
 
-    sqlx::query!("CREATE TABLE IF NOT EXISTS exclusions (guild_id INTEGER, channel_id INTEGER);")
+    sqlx::query!("CREATE TABLE IF NOT EXISTS exclusions (guild_id INTEGER, channel_id INTEGER, PRIMARY KEY (guild_id, channel_id));")
+        .execute(DB.get().unwrap())
+        .await
+        .unwrap();
+
+    sqlx::query!("CREATE TABLE IF NOT EXISTS opted_out (user_id INTEGER PRIMARY KEY);")
         .execute(DB.get().unwrap())
         .await
         .unwrap();
@@ -61,7 +67,7 @@ async fn main()
 
     let framework = Framework::builder()
         .options(FrameworkOptions {
-            commands: vec![commands::list(), commands::add(), commands::exclude(), commands::remove()],
+            commands: vec![commands::list(), commands::add(), commands::remove(), commands::exclude(), commands::include(), commands::opt()],
             owners: HashSet::from([UserId::new(342429466359758850)]),
             event_handler: move |ctx, event, framework, data| {
                 Box::pin(event_handler(ctx, event, framework, data))
@@ -81,53 +87,74 @@ async fn main()
     client.unwrap().start().await.unwrap();
 }
 
-async fn event_handler(ctx: &poise::serenity_prelude::Context, event: &FullEvent, _framework: poise::FrameworkContext<'_, Data, Error>, _data: &Data) -> Result<(), Error>
+async fn event_handler(ctx: &poise::serenity_prelude::Context, _event: &FullEvent, _framework: poise::FrameworkContext<'_, Data, Error>, _data: &Data) -> Result<(), Error>
 {
-    match event {
-        FullEvent::Message { new_message } => 'message: {
-            if new_message.author == **ctx.cache.current_user() {
-                break 'message;
-            }
-            let guild = new_message.guild_id;
-            if guild.is_none() {
-                break 'message;
-            }
-            let guild_id = guild.unwrap().get() as i64;
-            let channel_id = new_message.channel_id.get() as i64;
-            let excluded = sqlx::query!("SELECT COUNT(*) AS count FROM exclusions WHERE guild_id = ? AND channel_id = ?", guild_id, channel_id)
-                .fetch_one(DB.get().unwrap())
-                .await
-                .unwrap();
-            if excluded.count == 0 {
-                let checks = sqlx::query!("SELECT hook, user_id FROM hooks WHERE guild_id = ?", guild_id)
-                    .fetch_all(DB.get().unwrap())
-                    .await
-                    .unwrap();
-
-                let content = new_message.content.clone();
-                for record in checks {
-                    let str = record.hook.unwrap();
-                    if content.contains(&str) {
-                        let user_id = UserId::from(record.user_id.unwrap() as u64);
-                        let user = user_id.to_user(&ctx.http).await.unwrap();
-                        let guild_channel = new_message
-                            .channel(ctx).await.unwrap()
-                            .guild().unwrap();
-                        let guild = guild_channel.guild(ctx).unwrap().clone();
-                        let member = guild.member(&ctx.http, user_id).await.unwrap();
-                        let user_perms = guild.user_permissions_in(&guild_channel, &*member.clone());
-                        if user_perms.read_message_history() & user_perms.view_channel() {
-                            let message = CreateMessage::new().content(format!("Hook `{}` triggered in message {} by {}", str, new_message.link(), new_message.author.mention()));
-                            user.direct_message(ctx, message).await.expect(format!("failed to dm user {}", user_id).as_str());
-                        }
-                    }
-                }
-            }
+    match _event {
+        FullEvent::Message { new_message } => {
+            handle_message(ctx, new_message.clone(), false).await;
         }
-        FullEvent::MessageUpdate { .. } => {
-            //tbd
+        FullEvent::MessageUpdate { event, .. } => {
+            let mut message = Message::default();
+            event.apply_to_message(&mut message);
+            handle_message(ctx, message, true).await;
         }
         _ => {}
     }
     Ok(())
+}
+
+async fn handle_message(ctx: &poise::serenity_prelude::Context, message: Message, edit: bool)
+{
+    if message.author == **ctx.cache.current_user() {
+        return;
+    }
+    let guild = message.guild_id;
+    if guild.is_none() {
+        return;
+    }
+
+    let author_id = message.author.id.get() as i64;
+    let guild_id = guild.unwrap().get() as i64;
+    let channel_id = message.channel_id.get() as i64;
+
+    let excluded_channels = sqlx::query!("SELECT COUNT(*) AS count FROM exclusions WHERE guild_id = ? AND channel_id = ?", guild_id, channel_id)
+        .fetch_one(DB.get().unwrap())
+        .await
+        .unwrap();
+
+    let excluded_users = sqlx::query!("SELECT COUNT(*) AS count FROM opted_out WHERE user_id = ?", author_id)
+        .fetch_one(DB.get().unwrap())
+        .await
+        .unwrap();
+
+    if excluded_channels.count == 0 && excluded_users.count == 0 {
+        let checks = sqlx::query!("SELECT hook, user_id FROM hooks WHERE guild_id = ? AND user_id <> ?", guild_id, author_id)
+            .fetch_all(DB.get().unwrap())
+            .await
+            .unwrap();
+
+        let content = message.content.clone();
+        for record in checks {
+            let str = record.hook.unwrap();
+            if content.contains(&str) {
+                let user_id = UserId::from(record.user_id.unwrap() as u64);
+                let user = user_id.to_user(&ctx.http).await.unwrap();
+                let guild_channel = message
+                    .channel(ctx).await.unwrap()
+                    .guild().unwrap();
+                let guild = guild_channel.guild(ctx).unwrap().clone();
+                let _member = guild.member(&ctx.http, user_id).await;
+                let member;
+                match _member {
+                    Ok(m) => member = m,
+                    Err(_) => continue
+                }
+                let user_perms = guild.user_permissions_in(&guild_channel, &*member.clone());
+                if user_perms.read_message_history() & user_perms.view_channel() {
+                    let message = CreateMessage::new().content(format!("Hook `{}` triggered in {}{}by {}", str, message.link(), if !edit { " " } else { " (edited) " }, message.author.mention()));
+                    user.direct_message(ctx, message).await.expect(format!("failed to dm user {}", user_id).as_str());
+                }
+            }
+        }
+    }
 }
