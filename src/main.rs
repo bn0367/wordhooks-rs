@@ -10,7 +10,7 @@ use poise::serenity_prelude::{ClientBuilder, CreateMessage, FullEvent, GatewayIn
 use sqlx::{Pool, Sqlite};
 use tokio::sync::OnceCell;
 
-static DEBUG: bool = true;
+static DEBUG: bool = false;
 
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
