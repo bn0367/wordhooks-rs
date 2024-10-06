@@ -7,7 +7,6 @@ use std::env;
 use dotenv::dotenv;
 use poise::{Framework, FrameworkOptions};
 use poise::serenity_prelude::{ClientBuilder, CreateMessage, FullEvent, GatewayIntents, Mentionable, UserId};
-use poise::serenity_prelude::ModelError::MemberNotFound;
 use sqlx::{Pool, Sqlite};
 use tokio::sync::OnceCell;
 
@@ -110,11 +109,13 @@ async fn event_handler(ctx: &poise::serenity_prelude::Context, event: &FullEvent
                     let str = record.hook.unwrap();
                     if content.contains(&str) {
                         let user_id = UserId::from(record.user_id.unwrap() as u64);
-                        let user = user_id.to_user(ctx).await.unwrap();
-                        let user_perms = new_message
+                        let user = user_id.to_user(&ctx.http).await.unwrap();
+                        let guild_channel = new_message
                             .channel(ctx).await.unwrap()
-                            .guild().unwrap()
-                            .permissions_for_user(&ctx.cache, &user).unwrap();
+                            .guild().unwrap();
+                        let guild = guild_channel.guild(ctx).unwrap().clone();
+                        let member = guild.member(&ctx.http, user_id).await.unwrap();
+                        let user_perms = guild.user_permissions_in(&guild_channel, &*member.clone());
                         if user_perms.read_message_history() & user_perms.view_channel() {
                             let message = CreateMessage::new().content(format!("Hook `{}` triggered in message {} by {}", str, new_message.link(), new_message.author.mention()));
                             user.direct_message(ctx, message).await.expect(format!("failed to dm user {}", user_id).as_str());
