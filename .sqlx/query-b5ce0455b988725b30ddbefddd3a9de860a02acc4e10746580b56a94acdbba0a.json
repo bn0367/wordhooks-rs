@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "CREATE INDEX IF NOT EXISTS hooks_by_user ON hooks (user_id);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "b5ce0455b988725b30ddbefddd3a9de860a02acc4e10746580b56a94acdbba0a"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT hook, guild_id FROM hooks WHERE user_id = ? ORDER BY hook DESC;",
+  "describe": {
+    "columns": [
+      {
+        "name": "hook",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "guild_id",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "21b038c0ad12a36c2e94a382de9c14449b793098dcc37437fb9f64538904ad01"
+}

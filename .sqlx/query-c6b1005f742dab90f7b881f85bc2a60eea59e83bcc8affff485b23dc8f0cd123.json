@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "CREATE TABLE IF NOT EXISTS exclusions (guild_id INTEGER, channel_id INTEGER, PRIMARY KEY (guild_id, channel_id));",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "c6b1005f742dab90f7b881f85bc2a60eea59e83bcc8affff485b23dc8f0cd123"
+}

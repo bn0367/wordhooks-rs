@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM exclusions WHERE guild_id = ? AND channel_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "6d45da7f25eb15d9e78495c30853b2c8a551a20a81839af45aadac2b9a410d40"
+}

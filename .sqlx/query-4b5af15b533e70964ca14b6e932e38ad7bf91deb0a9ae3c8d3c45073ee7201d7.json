@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "CREATE TABLE IF NOT EXISTS hooks (user_id INTEGER, guild_id INTEGER, hook TEXT);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "4b5af15b533e70964ca14b6e932e38ad7bf91deb0a9ae3c8d3c45073ee7201d7"
+}

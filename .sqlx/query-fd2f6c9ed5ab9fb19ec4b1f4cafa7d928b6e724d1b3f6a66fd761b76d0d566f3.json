@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM opted_out WHERE user_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "fd2f6c9ed5ab9fb19ec4b1f4cafa7d928b6e724d1b3f6a66fd761b76d0d566f3"
+}

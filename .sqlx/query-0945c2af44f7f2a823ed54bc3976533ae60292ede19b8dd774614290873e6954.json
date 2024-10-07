@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "CREATE TABLE IF NOT EXISTS opted_out (user_id INTEGER PRIMARY KEY);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "0945c2af44f7f2a823ed54bc3976533ae60292ede19b8dd774614290873e6954"
+}

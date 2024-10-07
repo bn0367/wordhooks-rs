@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM hooks WHERE user_id = ? AND guild_id = ? AND hook = ?;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "0d8f3bbeb072023fd3e2c72d81a9a8bbbb83f7126b1340e1d3a920397171b557"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "CREATE INDEX IF NOT EXISTS hooks_by_guild ON hooks (guild_id);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "5122e0698197b590acd73c14f33276bbcb9198d0fbf11fab34c1d4b0a3f33a54"
+}
