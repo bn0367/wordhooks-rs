@@ -25,3 +25,9 @@ jobs:
           registry: https://ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ghcr.io/bn0367/wordhooks-rs:${{ steps.package-version.outputs.current-version}}b${{github.run_number}},ghcr.io/bn0367/wordhooks-rs:latest
+          platforms: linux/arm64
