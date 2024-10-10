@@ -15,10 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.6
+      - uses: mozilla-actions/sccache-action@v0.0.6
+      - id: version
+        uses: dante-signal31/rust-app-version@v1.2.0
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - run: cargo build --release
+      - run: ls $HOME/work/wordhooks-rs/wordhooks-rs/target/release/
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -29,5 +31,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/bn0367/wordhooks-rs:${{ steps.package-version.outputs.current-version}}b${{github.run_number}},ghcr.io/bn0367/wordhooks-rs:latest
+          tags: ghcr.io/bn0367/wordhooks-rs:${{ steps.version.outputs.app_version}}b${{github.run_number}},ghcr.io/bn0367/wordhooks-rs:latest
           platforms: linux/arm64
