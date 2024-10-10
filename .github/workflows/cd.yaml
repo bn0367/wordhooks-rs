@@ -33,3 +33,4 @@ jobs:
           push: true
           tags: ghcr.io/bn0367/wordhooks-rs:${{ steps.version.outputs.app_version}}b${{github.run_number}},ghcr.io/bn0367/wordhooks-rs:latest
           platforms: linux/arm64
+          context: .
