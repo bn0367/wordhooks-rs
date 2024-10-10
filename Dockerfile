@@ -1,4 +1,4 @@
-FROM alpine:3.14 AS base
+FROM --platform=linux/amd64 alpine:3.14 AS base
 
 RUN ls $HOME
 RUN ls
