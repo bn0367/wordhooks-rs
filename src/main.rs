@@ -4,11 +4,14 @@ extern crate dotenv;
 
 use std::collections::HashSet;
 use std::env;
+use base64::{engine, Engine};
 use dotenv::dotenv;
 use poise::{Framework, FrameworkOptions};
-use poise::serenity_prelude::{ClientBuilder, CreateMessage, FullEvent, GatewayIntents, Mentionable, Message, UserId};
+use poise::serenity_prelude::{ClientBuilder, CreateInteractionResponse, CreateMessage, FullEvent, GatewayIntents, InteractionType, Mentionable, Message, UserId};
+use poise::serenity_prelude::ComponentInteractionDataKind::StringSelect;
 use sqlx::{Pool, Sqlite};
 use tokio::sync::OnceCell;
+use crate::commands::hooks::{create_list_msg_interaction};
 
 static DEBUG: bool = false;
 
@@ -66,7 +69,7 @@ async fn main()
 
     let framework = Framework::builder()
         .options(FrameworkOptions {
-            commands: vec![commands::list(), commands::add(), commands::remove(), commands::exclude(), commands::include(), commands::opt()],
+            commands: vec![commands::channels::include(), commands::channels::exclude(), commands::hooks::remove(), commands::hooks::add(), commands::hooks::list(), commands::user::opt(), commands::misc::help()],
             owners: HashSet::from([UserId::new(342429466359758850)]),
             event_handler: move |ctx, event, framework, data| {
                 Box::pin(event_handler(ctx, event, framework, data))
@@ -96,6 +99,34 @@ async fn event_handler(ctx: &poise::serenity_prelude::Context, _event: &FullEven
             let mut message = Message::default();
             event.apply_to_message(&mut message);
             handle_message(ctx, message, true).await;
+        }
+        FullEvent::InteractionCreate { interaction } => {
+            if interaction.kind() == InteractionType::Component {
+                let component = interaction.as_message_component().unwrap();
+                let id = component.clone().member.unwrap().user.id.get() as i64;
+                let data = &component.data;
+                match component.data.custom_id.as_str() {
+                    "remove_hook_list" => {
+                        let StringSelect { values } = &data.kind else {
+                            panic!("incorrect interaction kind")
+                        };
+                        let hook = values.get(0).unwrap();
+                        let parts = hook.split("|").collect::<Vec<&str>>();
+
+                        let guild_id = parts[0].parse::<i64>().unwrap();
+                        let real_hook = String::from_utf8(engine::general_purpose::STANDARD.decode(parts[1]).unwrap()).unwrap();
+
+                        sqlx::query!("DELETE FROM hooks WHERE user_id = ? AND guild_id = ? AND hook = ?", id, guild_id, real_hook)
+                            .execute(DB.get().unwrap())
+                            .await
+                            .unwrap();
+
+                        let builder = create_list_msg_interaction(id).await;
+                        component.create_response(&ctx.http, CreateInteractionResponse::UpdateMessage(builder)).await.expect("could not send (update) interaction response");
+                    }
+                    _ => {}
+                }
+            }
         }
         _ => {}
     }

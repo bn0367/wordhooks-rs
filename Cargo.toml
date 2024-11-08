@@ -10,3 +10,4 @@ tracing = "0.1.40"
 dotenv_codegen = "0.15.0"
 dotenv = "0.15.0"
 sqlx = { version = "0.8.2", features = ["sqlite", "runtime-tokio"] }
+base64 = "0.22.1"

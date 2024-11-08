@@ -23,7 +23,6 @@ jobs:
         uses: dante-signal31/rust-app-version@v1.2.0
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - run: cargo build --release
-      - run: ls $HOME/work/wordhooks-rs/wordhooks-rs/target/release/
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
