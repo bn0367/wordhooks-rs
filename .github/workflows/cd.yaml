@@ -22,6 +22,8 @@ jobs:
       - id: version
         uses: dante-signal31/rust-app-version@v1.2.0
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo sqlx prepare
       - run: cargo build --release
       - name: Log in to the Container registry
         uses: docker/login-action@v3

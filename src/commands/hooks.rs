@@ -63,7 +63,7 @@ struct ListMsg {
     embed: CreateEmbed,
     hook_list: Vec<CreateSelectMenuOption>,
 }
-pub async fn _create_list_msg(id: i64) -> ListMsg {
+async fn _create_list_msg(id: i64) -> ListMsg {
     let response_hooks = sqlx::query!("SELECT hook, guild_id FROM hooks WHERE user_id = ? ORDER BY hook DESC;", id)
         .fetch_all(DB.get().unwrap())
         .await
